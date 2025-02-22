@@ -85,9 +85,7 @@ python search.py --image sample.jpg
 Feel free to fork the repository and submit pull requests for improvements!
 
 
-## License
 
-This project is licensed under the MIT License. You can read the full license text [here](https://opensource.org/licenses/MIT).
 
 
 ---
