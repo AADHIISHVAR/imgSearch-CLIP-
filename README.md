@@ -22,6 +22,10 @@
 
 ## Installation
 
+   RUN THE gpuTest.py @ cmd administrator 
+               (or)
+   read the gpuTest.py 's description
+
 ### Prerequisites
 
 Ensure you have the following installed:
