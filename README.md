@@ -111,6 +111,8 @@ When the image search is performed on a larger dataset, it takes more time to fi
 
 For example:
 
+how ur hardware affects my softwares performance
+
 To find an image in a dataset of 700 images, running on a CPU (Intel i5 3rd Gen U-series) takes over 400 seconds to complete the search.
 
 However, when the search is performed using a GPU (NVIDIA GeForce 3050 6GB), it takes just 77 seconds to complete the search on an image dataset consisting of over 1000 images. Additionally, it is capable of opening the searched images sequentially.
