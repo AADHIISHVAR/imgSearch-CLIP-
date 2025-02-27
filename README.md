@@ -35,6 +35,7 @@ Ensure you have the following installed:
 - OpenAI CLIP
 - NumPy
 - PIL (Pillow)
+- CUDA
 
 
 ### Steps to Install
