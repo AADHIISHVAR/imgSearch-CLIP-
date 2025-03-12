@@ -4,7 +4,7 @@ import io
 import torch
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog, QHBoxLayout, QTextEdit
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
@@ -66,8 +66,14 @@ class ImageSearchGUI(QWidget):
         self.search_button.clicked.connect(self.search_action)
         layout.addWidget(self.search_button, alignment=Qt.AlignCenter)
 
+        # Info Tab
+        self.info_tab = QTextEdit()
+        self.info_tab.setReadOnly(True)
+        self.info_tab.setStyleSheet("background-color: #1e272e; color: #ecf0f1; padding: 5px; border-radius: 5px; font-size: 12px;")
+        layout.addWidget(self.info_tab)
+
         self.setLayout(layout)
-        self.setGeometry(200, 200, 400, 300)
+        self.setGeometry(200, 200, 400, 400)
 
     def input_style(self):
         return "color: #34495e; background-color: #ecf0f1; padding: 5px; border-radius: 5px; font-size: 14px;"
@@ -79,38 +85,54 @@ class ImageSearchGUI(QWidget):
         image_path, _ = QFileDialog.getOpenFileName(self, "Select Image", "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
         if image_path:
             self.image_path_input.setText(image_path)
+            self.update_info(f"Selected Image: {image_path}")
 
     def browse_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder_path:
             self.folder_path_input.setText(folder_path)
+            self.update_info(f"Selected Folder: {folder_path}")
 
     def search_action(self):
         image_path = self.image_path_input.text()
         folder_path = self.folder_path_input.text()
+        self.worker = ImageSearchWorker(image_path, folder_path)
+
 
         if not image_path or not folder_path:
-            print("Please enter both image and folder paths.")
+            self.update_info("Please enter both image and folder paths.")
             return
 
         self.search_button.setEnabled(False)
 
-        self.worker = ImageSearchWorker(image_path, folder_path)
-        self.worker.finished.connect(self.on_search_finished)
-        self.worker.start()
+        self.update_info("Starting search...")
+
+        try:
+            self.worker = ImageSearchWorker(image_path, folder_path)
+            self.worker.finished.connect(self.on_search_finished)
+            self.worker.start()
+        except Exception as e:
+            self.update_info(f"Error: {e}")
+            self.search_button.setEnabled(True)
 
     def on_search_finished(self, message):
-        print(message)
+        self.update_info(message)
         self.search_button.setEnabled(True)
+
+    def update_info(self, message):
+        print(message)  # Output to IDE
+        self.info_tab.append(message)  # Output to GUI
+
 
 
 class ImageSearchWorker(QThread):
     finished = pyqtSignal(str)
 
-    def __init__(self, test_path, folder_path):
+    def __init__(self, test_path, folder_path ):
         super().__init__()
         self.test_path = test_path
         self.folder_path = folder_path
+        
 
     def run(self):
         try:
@@ -121,6 +143,7 @@ class ImageSearchWorker(QThread):
             self.finished.emit(f"Error: {str(e)}")
 
 
+
 class imgSearch:
 
     def __init__(self, testPath, folderPath, similarity):
@@ -129,12 +152,17 @@ class imgSearch:
         self.similarity = similarity
         self.model = None
         self.processor = None
-
+        
+    
     def loadModal(self):
         try:
-            self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-            self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+            self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir="C:\\Users\\Admin\\clip_model")
+            # processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14", cache_dir="C:\\Users\\Admin\\clip_model")
+            #model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+            self.processor =CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir="C:\\Users\\Admin\\clip_model") #CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+            
             print("Model loaded successfully.")
+            
         except Exception as e:
             print(f"Error loading model: {e}")
             exit(1)
@@ -169,7 +197,11 @@ class imgSearch:
             print("No images found for comparison.")
             return
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.cuda.is_available():
+            device = "cuda"
+        else :
+            device = "cpu"
+            
         self.model.to(device)
 
         test_Input = self.processor(images=test_img, return_tensors="pt").to(device)
