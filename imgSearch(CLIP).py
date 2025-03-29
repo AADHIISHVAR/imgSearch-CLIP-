@@ -138,13 +138,15 @@ class ImageSearchWorker(QThread):
         try:
             objMain = imgSearch(self.test_path, self.folder_path, similarity=0.8)
             objMain.main()
-            self.finished.emit("Search Completed!")
+            self.finished.emit("Search Completed!,Pleace wait untill the images open up")
+            self.finished.emit("if nothing open up for a while,that means no images where simarlier to your test image in in the folder")
         except Exception as e:
             self.finished.emit(f"Error: {str(e)}")
 
 
-
 class imgSearch:
+    
+    infoMsg = pyqtSignal(str)
 
     def __init__(self, testPath, folderPath, similarity):
         self.testPath = testPath
@@ -152,20 +154,41 @@ class imgSearch:
         self.similarity = similarity
         self.model = None
         self.processor = None
-        
-    
+        self.gui = None  # Initialize as None
+
+    def set_gui(self, gui_instance):
+        print("Setting GUI instance...")
+        self.gui = gui_instance
+
     def loadModal(self):
         try:
-            self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir="C:\\Users\\Admin\\clip_model")
-            # processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14", cache_dir="C:\\Users\\Admin\\clip_model")
-            #model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-            self.processor =CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir="C:\\Users\\Admin\\clip_model") #CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+            print("Loading model...")
+
+            # Ensure cache directory exists
             
+            cache_path = "C:\\Users\\Admin\\clip_model"
+            os.makedirs(cache_path, exist_ok=True)
+
+            # Load model and processor
+            self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cache_path)
+            self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cache_path)
+
             print("Model loaded successfully.")
-            
+
+            # Update GUI if available
+            if self.gui:
+                self.gui.update_info("Model loaded successfully.")
+
         except Exception as e:
-            print(f"Error loading model: {e}")
+            error_message = f"Error loading model: {e}"
+            print(error_message)
+
+            # Notify GUI of the error if available
+            if self.gui:
+                self.gui.update_info(error_message)
+
             exit(1)
+
 
     def imgLoad(self):
         try:
