@@ -20,6 +20,8 @@ its wrong purposefully , ill update it later
 3. The embeddings are compared using cosine similarity to find the most relevant matches.
 4. The best-matching images are displayed as search results.
 
+![diagram](https://github.com/user-attachments/assets/0fdb99ba-4e83-48eb-b197-baed32815d08)
+
 
 ## Installation
 
