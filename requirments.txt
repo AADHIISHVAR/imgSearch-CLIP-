@@ -1,11 +1,7 @@
 Microsoft Windows [Version 10.0.26100.3624]
 (c) Microsoft Corporation. All rights reserved.
 
-C:\Users\abhej>piplist
-'piplist' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\abhej>pip list
+C:\Users\Admin>pip list
 Package            Version
 ------------------ -----------
 asttokens          3.0.0
@@ -55,4 +51,3 @@ typing_extensions  4.12.2
 urllib3            2.3.0
 wcwidth            0.2.13
 
-C:\Users\abhej>piplist^A^A^A^A
