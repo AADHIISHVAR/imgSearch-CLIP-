@@ -1,5 +1,7 @@
-import app
-from fastapi import FastAPI
+# import app
+from idlelib.query import Query
+
+from fastapi import FastAPI,Query
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -22,7 +24,7 @@ app.add_middleware(
 )
 
 
-
+model_path = os.environ.get('MODEL_PATH')
 
 @app.get("/")
 def read_root():
@@ -42,9 +44,9 @@ def run_test():
     }
 
     try:
-        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir="C:\\Users\\Admin\\clip_model")
+        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir=model_path)
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32",
-                                                  cache_dir="C:\\Users\\Admin\\clip_model")
+                                                  cache_dir=model_path,use_fast=True)
         print("CLIP model and processor loaded successfully.")
     except Exception as e:
         print(f"Error loading CLIP model: {e}")
@@ -54,9 +56,12 @@ def run_test():
 
 #imgCount=0
 @app.post("/startSearch")
-def startSearch(testPath: str, folderPath: str):
-    global model
-    global info
+def startSearch(
+    testPath: str = Query(...),
+    folderPath: str = Query(...),
+    sensitivity: float = Query(...)
+):
+    global info, model
     info={}
 
     try:
@@ -66,12 +71,12 @@ def startSearch(testPath: str, folderPath: str):
 
         # Ensure cache directory exists
 
-        cache_path = "C:\\Users\\Admin\\clip_model"
-        os.makedirs(cache_path, exist_ok=True)
+        # cache_path = model_path
+        # os.makedirs(cache_path, exist_ok=True)
 
         # Load model and processor
-        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cache_path)
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cache_path)
+        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir=model_path)
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir=model_path,use_fast=True)
 
         print("Model loaded successfully.")
         info.update({"Model loaded successfully.":"Green flag"})
@@ -122,22 +127,32 @@ def startSearch(testPath: str, folderPath: str):
 
     print("The number of images you have uploaded is", len(image_list))
     #imgCount = len(image_list)
+    okVariable = None  # Initialize before the loop
+
     for i in range(len(image_list)):
         similarity = torch.nn.functional.cosine_similarity(
             test_img_features, image_features[i:i + 1], dim=-1
         )
 
-        if similarity.item() > 0.80:
-            print(f"Similarity between test image and Image {i + 1} in the folder u uploded: {similarity.item():.4f}")
-            info.update({f"Similarity between test image and Image {i + 1} in the uploaded folder": round(similarity.item(), 4)})
-            print("#The similarity is rounded up to the nearest even number cuz its python")
-            image_list[i].show()  # Directly display the image
-
-        #todo write the else part is the image is not found
+        if similarity.item() >= sensitivity:
+            print(f"Similarity between test image and Image {i + 1} in the uploaded folder: {similarity.item():.4f}")
+            info.update({f"Similarity between test image and Image {i + 1} in the uploaded folder": round(
+                similarity.item(), 4)})
+            print("# The similarity is rounded up to the nearest even number because it's Python (although that's not literally true)")
+            image_list[i].show()  # Display the image
+            print(sensitivity)
+            okVariable = "ok"
+# if the image is not found
+    if okVariable != "ok":
+        info.update({f"No similar image found to the simaliraty score tyr changing teh sensitivity value from teh current value{sensitivity}":"Red flag"})
+        # print(f"No similar image found to the simaliraty score tyr changing teh sensitivity value from teh current value{sensitivity}")
+        info.update({"None of the images were similar to the test image": "Red flag"})
+        # 💡 You can handle further actions here
+        # e.g., log, alert, or provide fallback visuals/messages
 
 
 @app.post("/imageCount")
-def imageCount(testPath: str, folderPath: str   ):
+def imageCount(testPath: str, folderPath: str):
     imgCountList=0
     for filename in os.listdir(folderPath):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
